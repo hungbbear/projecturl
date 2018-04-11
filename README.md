@@ -1,2 +1,2 @@
 # projecturl
-Shorten URL project written in Java Spring & JPA
+Shorten URL project written in Spring MVC & JPA
