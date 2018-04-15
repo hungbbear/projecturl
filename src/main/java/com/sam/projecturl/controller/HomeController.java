@@ -9,6 +9,7 @@ import com.google.common.hash.Hashing;
 import com.sam.projecturl.checkUrl.checkUrlExist;
 import com.sam.projecturl.checkUrl.getTitleURLs;
 import com.sam.projecturl.model.ShortUrl;
+import com.sam.projecturl.model.User;
 import com.sam.projecturl.model.UserCookieShortUrl;
 import com.sam.projecturl.service.ShortUrlService;
 import com.sam.projecturl.service.UserCookieShortUrlService;
@@ -66,9 +67,9 @@ public class HomeController {
         //iterate each cookie
         
         if (cookies!=null) {
-            String sha256hex = Hashing.sha256().hashString(Utils.getSaltString(), StandardCharsets.UTF_8).toString();
+            String sha1hex = Hashing.sha1().hashString(Utils.getSaltString(), StandardCharsets.UTF_8).toString();
 
-            Cookie newCookie123 = new Cookie("hash", sha256hex);
+            Cookie newCookie123 = new Cookie("sha256", sha1hex);
             newCookie123.setMaxAge(24 * 60 * 60);
             response.addCookie(newCookie123);
             m.addObject("su", su);
@@ -97,74 +98,68 @@ public class HomeController {
     }
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
-    public String ShortenUrlUnsignup(@ModelAttribute(name = "su") UserCookieShortUrl su, ModelMap modelMal, HttpServletRequest request) {
-        if(request.getSession().getAttribute("name").equals(""))
-            return "redirect:/user";
+    public String ShortenUrlUnsignup(@ModelAttribute(name = "su") ShortUrl su, ModelMap model, HttpServletRequest request) {
         String getCookieCurrent = null;
+        List<ShortUrl> listShortLink=null;
+        
+        
         Cookie[] cookies = request.getCookies();
-        //iterate each cookie
         for (Cookie cookie : cookies) {
-            //display only the cookie with the name 'website'
-            if (cookie.getName().equals("userCookie-ShortLink")) {
+            if (cookie.getName().equals("hash")) {
                 getCookieCurrent = cookie.getValue();
             }
         }
+        
+        User user=userService.findByName(getCookieCurrent);
+        if(user==null){
+            user.setUserhash(DigestUtils.md5DigestAsHex(Utils.getSaltString().getBytes()));
+        }
+        
         checkUrlExist checkUrl = new checkUrlExist();
-        modelMal.addAttribute("buttonCheck", "Summit");
-        modelMal.addAttribute("Error", "");
+        model.addAttribute("buttonCheck", "Summit");
+        model.addAttribute("Error", "");
         if (!checkUrl.isURL(su.getLongUrl()) && su.getLongUrl().equals("Paste a link to shorten it")) {
-            modelMal.addAttribute("Error", "Link không tồn tại");
+            model.addAttribute("Error", "Link không tồn tại");
         }
 
         if (checkUrl.isURLExit(su.getLongUrl())) {
-            modelMal.addAttribute("buttonCheck", "COPPY");
+            model.addAttribute("buttonCheck", "COPY");
         }
-
+        
         if (!su.getLongUrl().equals("Paste a link to shorten it") && checkUrl.isURL(su.getLongUrl())) {
             String shortURL = Utils.getSaltString();
-            List<UserCookieShortUrl> showShortLink = userCookieShortUrlService.findByIdCookie(getCookieCurrent);
-            su.setIdCookie(getCookieCurrent);
+            su.setUser(user);
             su.setShortUrl(shortURL);
-            userCookieShortUrlService.save(su);
+            shortUrlService.save(su);
             
-            VirusUtil2 virusdetect = new VirusUtil2();
+            VirusUtil virusdetect = new VirusUtil();
             virusdetect.setSu(su);
             virusdetect.start();
-            
-            //Limit shorten link unsignup
-//            if (showShortLink.size() > 1) {
-//                userCookieShortUrlService.delete(showShortLink.get(0).getId());
-//            }
-
-//            if(showShortLink.size()>2){
-//               userCookieShortUrlService.findByDeleteUserCookieShortUrl(getCookieCurrent);
-//               
-//            }
-            modelMal.addAttribute("shortLink", "http://ngangon.tk/l/" + su.getShortUrl());
-            modelMal.addAttribute("buttonCheck", "COPY");
+            model.addAttribute("shortLink", "http://ngangon.tk/l/" + su.getShortUrl());
+            model.addAttribute("buttonCheck", "COPY");
+            listShortLink= shortUrlService.findByUser(user);
         }
 
-        List<UserCookieShortUrl> showShortLink = userCookieShortUrlService.findByIdCookie(getCookieCurrent);
+         
 //        Vector sullList = new Vector();
 //        for (UserCookieShortUrl sull : showShortLink) {
 //            String title = getTitleURLs.gettitleurls(sull.getLongUrl());
 //
 //            sullList.add(title);
 //        }
-        Collections.reverse(showShortLink);
+        Collections.reverse(listShortLink);
 
-        modelMal.addAttribute("showSU", showShortLink);
-//        Collections.reverse(sullList);
-//        modelMal.addAttribute("showSULL", sullList);
+        model.addAttribute("showSU", listShortLink);
         return "home/index";
     }
+    
     @RequestMapping(value = "/insertsu", method = RequestMethod.POST)
     public String insertURL(@ModelAttribute(name = "su") ShortUrl su,HttpServletRequest request) {
         String shortURL = Utils.getSaltString();
         String name=request.getSession().getAttribute("name").toString();
         su.setShortUrl(shortURL);
         su.setVirus(0);
-         com.sam.projecturl.model.User user =userService.findByName(name);
+        com.sam.projecturl.model.User user =userService.findByName(name);
         su.setUser(user);
         su.setDate(String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli()));
         shortUrlService.save(su);
@@ -208,30 +203,50 @@ public class HomeController {
 
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public String loginWithForm(HttpServletRequest request, HttpServletResponse response) {
-        
         String nameCheck = request.getParameter("username");
         String passCheck = request.getParameter("password");
+        List<ShortUrl> ls;
+        
         Cookie[] cookies;
         cookies = request.getCookies();
+        
+        User user =userService.findByNameAndPass(nameCheck, passCheck);
+        
         if (cookies!=null)
             return "redirect:/user";
         else
-            if (userService.findByNameAndPass(nameCheck, passCheck) != null) {
+            if (user!=null) {
+                Cookie session;
+                Cookie hash;
+                Cookie expire;
                 String md5user=DigestUtils.md5DigestAsHex(nameCheck.getBytes());
+                String sha1hex = Hashing.sha1().hashString(Utils.getSaltString(), StandardCharsets.UTF_8).toString();
+                String exp=String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
                 
+                user.setUserhash(md5user);
+                user.setSha256(sha1hex);
                 
                 ShortUrl su = new ShortUrl();
-                List<ShortUrl> ls;
-                if(!nameCheck.equals("")){
-                ls=shortUrlService.findByUser(userService.findByName(nameCheck));
+                
+                ls=shortUrlService.findByUser(user);
                 request.setAttribute("lsuser", ls);
-                } else {
-                    ls=null;
-                }
 
                 request.setAttribute("su", su);
-                return "User/UserIndex";
-            }
+                
+                session=new Cookie("session",sha1hex);
+                session.setMaxAge(24 * 60 * 60);
+                hash=new Cookie("hash",md5user);
+                hash.setMaxAge(24 * 60 * 60);
+                expire=new Cookie("expire",exp);
+                expire.setMaxAge(24 * 60 * 60);
+                
+                response.addCookie(hash);
+                response.addCookie(session);
+                userService.save(user);
+                
+                return "redirect:/user";
+            } else
+                ls=null;
         request.setAttribute("error", "Username Hoặc Passowrd Không Hợp Lệ!!");
         return "Login/sign_in";
     }

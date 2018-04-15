@@ -34,8 +34,7 @@ public class User implements Serializable {
     private String email;
     private String phone;
     private String idFace;
-    private String token;
-    private String session;
+    private String sha256;
     private String userhash;
     private String expire;
     
@@ -82,21 +81,15 @@ public class User implements Serializable {
         this.phone = phone;
     }
 
-    public String getToken() {
-        return token;
+    public String getSha256() {
+        return sha256;
     }
 
-    public void setToken(String token) {
-        this.token = token;
+    public void setSha256(String sha256) {
+        this.sha256 = sha256;
     }
 
-    public String getSession() {
-        return session;
-    }
-
-    public void setSession(String session) {
-        this.session = session;
-    }
+    
 
     public String getUserhash() {
         return userhash;
