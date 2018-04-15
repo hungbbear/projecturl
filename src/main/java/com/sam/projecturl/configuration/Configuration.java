@@ -7,8 +7,10 @@ package com.sam.projecturl.configuration;
 
 import java.util.Properties;
 import javax.persistence.EntityManagerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -34,8 +36,17 @@ import org.springframework.web.servlet.view.JstlView;
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = "com.sam.projecturl.repository")
 @ComponentScan(basePackages = "com.sam.projecturl")
+@PropertySource(value= {"classpath:application.properties"})
 public class Configuration extends WebMvcConfigurerAdapter {
-
+    @Value("${driver}")
+    private String driver;
+    @Value("${password}")
+    private String password;
+    @Value("${url}")
+    private String url;
+    @Value("${username}")
+    private String username;
+    
     @Bean(name = "ProjectURLviews")
     public ViewResolver viewResolver() {
         InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
@@ -44,14 +55,15 @@ public class Configuration extends WebMvcConfigurerAdapter {
         viewResolver.setSuffix(".jsp");
         return viewResolver;
     }
-
+    
+    
     @Bean(name = "dataSource")
     public DriverManagerDataSource dataSource() {
         DriverManagerDataSource driverManagerDataSource = new DriverManagerDataSource();
-        driverManagerDataSource.setDriverClassName("com.mysql.jdbc.Driver");
-        driverManagerDataSource.setUrl("jdbc:mysql://localhost:3306/projecturl?useUnicode=yes&characterEncoding=UTF-8");
-        driverManagerDataSource.setUsername("tomcatsv");
-        driverManagerDataSource.setPassword("@123Asdf");
+        driverManagerDataSource.setDriverClassName(driver);
+        driverManagerDataSource.setUrl(url);
+        driverManagerDataSource.setUsername(username);
+        driverManagerDataSource.setPassword(password);
         return driverManagerDataSource;
     }
 
