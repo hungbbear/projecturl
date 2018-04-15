@@ -42,4 +42,11 @@ public class UserServiceImpl implements UserService {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     return userRepository.findByName(name);}
 
+    @Override
+    public User findByCookie(String sha256, String userhash) {
+        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return userRepository.findByCookie(sha256, userhash);
+    }
+    
+    
 }

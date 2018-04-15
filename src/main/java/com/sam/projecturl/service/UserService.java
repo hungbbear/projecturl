@@ -18,4 +18,5 @@ public interface UserService {
     User findByUser(String idFace);
     User findByNameAndPass(String name,String password);
     User findByName(String name);
+    User findByCookie(String sha256, String userhash);
 }
