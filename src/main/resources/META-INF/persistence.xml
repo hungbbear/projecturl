@@ -5,11 +5,11 @@
     <provider>org.hibernate.ejb.HibernatePersistence</provider>
     <jta-data-source/>
     <class>com.sam.projecturl.model.ShortUrl</class>
-<!--    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="location">
             <value>application.properties</value>
         </property>
-    </bean>-->
+    </bean>
     <properties>
       <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>
       <property name="hibernate.hbm2ddl.auto" value="update"/>
