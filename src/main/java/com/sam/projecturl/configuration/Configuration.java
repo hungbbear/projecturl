@@ -10,8 +10,6 @@ import javax.persistence.EntityManagerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -37,15 +35,14 @@ import org.springframework.web.servlet.view.JstlView;
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = "com.sam.projecturl.repository")
 @ComponentScan(basePackages = "com.sam.projecturl")
-@PropertySource(value= {"classpath:application.properties"})
 public class Configuration extends WebMvcConfigurerAdapter {
-    @Value("${driver}")
+    @Value("${db.driver}")
     private String driver;
-    @Value("${password}")
+    @Value("${db.password}")
     private String password;
-    @Value("${url}")
+    @Value("${db.url}")
     private String url;
-    @Value("${username}")
+    @Value("${db.username}")
     private String username;
     
     @Bean(name = "ProjectURLviews")
@@ -57,10 +54,7 @@ public class Configuration extends WebMvcConfigurerAdapter {
         return viewResolver;
     }
     
-    @Bean
-    public static PropertySourcesPlaceholderConfigurer propertyConfigInDev() {
-        return new PropertySourcesPlaceholderConfigurer();
-    }
+    
     
     @Bean(name = "dataSource")
     public DriverManagerDataSource dataSource() {

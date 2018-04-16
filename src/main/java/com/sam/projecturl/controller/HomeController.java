@@ -67,19 +67,8 @@ public class HomeController {
         //iterate each cookie
         
         if (cookies!=null) {
-            String sha1hex = Hashing.sha1().hashString(Utils.getSaltString(), StandardCharsets.UTF_8).toString();
-
-            Cookie newCookie123 = new Cookie("sha256", sha1hex);
-            newCookie123.setMaxAge(24 * 60 * 60);
-            response.addCookie(newCookie123);
-            m.addObject("su", su);
-            m.addObject("buttonCheck", "BẤm Vào nút này");
-            return m;
-        } else 
-        for (Cookie cookie : cookies) {
-            if (cookie.getName().equals("hash")) {
-
-                if (!cookie.getValue().equals(null)) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("hash")) {
                     List<ShortUrl> ls=shortUrlService.findByUser(userService.findByName(cookie.getValue()));
                     Vector vList = new Vector();
                     for (ShortUrl sull : ls) {
@@ -89,9 +78,15 @@ public class HomeController {
                     Collections.reverse(vList);
                     m.addObject("showSU", ls);
                     m.addObject("showSULL", vList);
+                    break;
                 }
-                break;
             }
+            
+            m.addObject("su", su);
+            m.addObject("buttonCheck", "BẤm Vào nút này");
+            return m;
+        } else {
+            //abc create user
         }
         return m;
 
@@ -112,6 +107,7 @@ public class HomeController {
         
         User user=userService.findByName(getCookieCurrent);
         if(user==null){
+            user=new User();
             user.setUserhash(DigestUtils.md5DigestAsHex(Utils.getSaltString().getBytes()));
         }
         
