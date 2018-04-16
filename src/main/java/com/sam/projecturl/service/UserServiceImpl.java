@@ -43,9 +43,14 @@ public class UserServiceImpl implements UserService {
     return userRepository.findByName(name);}
 
     @Override
-    public User findByUserhash(String sha256, String userhash) {
+    public User findByUserhashAndsha256(String sha256, String userhash) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        return userRepository.findByUserhash(sha256, userhash);
+        return userRepository.findByUserhashAndSha256(sha256, userhash);
+    }
+
+    @Override
+    public User findByUserhash(String userhash) {
+        return userRepository.findByUserhash(userhash);
     }
     
     

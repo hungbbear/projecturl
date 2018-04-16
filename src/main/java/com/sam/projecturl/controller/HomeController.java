@@ -56,7 +56,7 @@ public class HomeController {
     @Autowired
     private UserService userService;
 
-    //index 
+    //** Index HOMEPAGE **
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public ModelAndView index(HttpServletRequest request, HttpServletResponse response)  {
         ModelAndView m = new ModelAndView("home/index");
@@ -64,30 +64,64 @@ public class HomeController {
         ShortUrl su = new ShortUrl();
         Cookie[] cookies;
         cookies = request.getCookies();
-        //iterate each cookie
-        
+        String hash="";
+        String session="";
+        String expire="";
+                
         if (cookies!=null) {
             for (Cookie cookie : cookies) {
                 if (cookie.getName().equals("hash")) {
-                    List<ShortUrl> ls=shortUrlService.findByUser(userService.findByName(cookie.getValue()));
+                    hash=cookie.getValue();
+                } else if(cookie.getName().equals("session")) {
+                    session=cookie.getValue();
+                } else if(cookie.getName().equals("expire")) {
+                    expire=cookie.getValue();
+                }
+            }
+            
+            if(!hash.equals("")){
+                if(session.equals("")&&expire.equals("")){
+                    List<ShortUrl> ls=shortUrlService.findByUser(userService.findByUserhash(hash));
                     Vector vList = new Vector();
-                    for (ShortUrl sull : ls) {
-                        vList.add(getTitleURLs.gettitleurls(sull.getLongUrl()));
+                    for (ShortUrl s : ls) {
+                        vList.add(getTitleURLs.gettitleurls(s.getLongUrl()));
                     }
                     Collections.reverse(ls);
                     Collections.reverse(vList);
                     m.addObject("showSU", ls);
                     m.addObject("showSULL", vList);
-                    break;
-                }
+                } else {
+                    User user=userService.findByUserhashAndsha256(session, hash);
+                    List<ShortUrl> ls=shortUrlService.findByUser(user);
+                    Vector vList = new Vector();
+                    for (ShortUrl s : ls) {
+                        vList.add(getTitleURLs.gettitleurls(s.getLongUrl()));
+                    }
+                    Collections.reverse(ls);
+                    Collections.reverse(vList);
+                    m.addObject("showSU", ls);
+                    m.addObject("showSULL", vList);
+                }       
             }
-            
-            m.addObject("su", su);
-            m.addObject("buttonCheck", "BẤm Vào nút này");
-            return m;
         } else {
-            //abc create user
+            User user=new User();
+            user.setUserhash(DigestUtils.md5DigestAsHex(Utils.getSaltString().getBytes()));
+            userService.save(user);
+            Cookie cookie=new Cookie("hash",user.getUserhash());
+            cookie.setMaxAge(24 * 60 * 60);
+            response.addCookie(cookie);
+            List<ShortUrl> ls=shortUrlService.findByUser(user);
+            Vector vList = new Vector();
+            for (ShortUrl s : ls) {
+                vList.add(getTitleURLs.gettitleurls(s.getLongUrl()));
+            }
+            Collections.reverse(ls);
+            Collections.reverse(vList);
+            m.addObject("showSU", ls);
+            m.addObject("showSULL", vList);
         }
+        m.addObject("su", su);
+        m.addObject("buttonCheck", "BẤm Vào nút này");
         return m;
 
     }
@@ -109,6 +143,7 @@ public class HomeController {
         if(user==null){
             user=new User();
             user.setUserhash(DigestUtils.md5DigestAsHex(Utils.getSaltString().getBytes()));
+            userService.save(user);
         }
         
         checkUrlExist checkUrl = new checkUrlExist();

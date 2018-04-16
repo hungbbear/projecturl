@@ -18,5 +18,6 @@ public interface UserRepository extends JpaRepository<User, Long>{
     User findByUser(String idFace);
     User findByNameAndPass(String name,String password);
     User findByName(String name);
-    User findByUserhash(String sha256, String userhash);
+    User findByUserhashAndSha256(String sha256, String userhash);
+    User findByUserhash(String userhash);
 }
